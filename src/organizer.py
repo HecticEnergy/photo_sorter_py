@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime
 from src.file_utils import create_fingerprint, is_duplicate
-from src.metadata import get_image_metadata
+from src.metadata import get_image_metadata, get_video_metadata, check_supported_format
 
 def create_folder_structure(base_folder, date):
     """Creates a folder structure based on the custom format."""
@@ -25,21 +25,39 @@ def process_file(file_path, settings):
     fingerprint_folder = settings.fingerprint_folder()
     output_folder = settings.output_folder()
 
+    # Check if the file format is supported
+    if not check_supported_format(file_path):
+        print(f"Unsupported format: {file_path}. Skipping.")
+        return
+
+    # Check for duplicates
     if is_duplicate(file_path, fingerprint_folder):
         print(f"Duplicate detected: {file_path}. Skipping processing.")
-    else:
+        return
+
+    # Determine metadata and process accordingly
+    metadata = None
+    if file_path.lower().endswith(tuple(settings.SUPPORTED_IMAGE_FORMATS)):
         metadata = get_image_metadata(file_path)
-        if metadata:
-            try:
-                date = datetime.strptime(metadata, "%Y:%m:%d %H:%M:%S")
-                folder_path = create_folder_structure(output_folder, date)
-                filename = generate_filename(date, settings.date_format())
-                copy_file_to_folder(file_path, folder_path, filename)
-                create_fingerprint(file_path, fingerprint_folder)
-            except ValueError as e:
-                print(f"Invalid date format in metadata for {file_path}: {e}")
-        else:
-            print(f"No metadata found for {file_path}. Skipping file.")
+    elif file_path.lower().endswith(tuple(settings.SUPPORTED_VIDEO_FORMATS)):
+        metadata = get_video_metadata(file_path)
+
+    if metadata:
+        try:
+            # Parse the date string into a datetime object
+            date = datetime.strptime(metadata, "%Y:%m:%d %H:%M:%S")
+            # Create the folder structure based on the date
+            folder_path = create_folder_structure(output_folder, date)
+            # Generate the filename
+            filename = generate_filename(date, settings.date_format())
+            # Copy the file to the destination
+            copy_file_to_folder(file_path, folder_path, filename)
+            # Create a fingerprint for the processed file
+            create_fingerprint(file_path, fingerprint_folder)
+        except ValueError as e:
+            print(f"Invalid date format in metadata for {file_path}: {e}")
+    else:
+        print(f"No metadata found for {file_path}. Skipping.")
 
 def organize_files(settings):
     """Organizes files by reading metadata and arranging them into folders."""
