@@ -1,0 +1,40 @@
+import hashlib
+import os
+import json
+
+def calculate_file_hash(file_path):
+    """Calculates a hash of the file's content for fingerprinting."""
+    hasher = hashlib.sha256()
+    try:
+        with open(file_path, 'rb') as file:
+            while chunk := file.read(8192):  # Read in chunks
+                hasher.update(chunk)
+    except Exception as e:
+        print(f"Error calculating hash for {file_path}: {e}")
+        return None
+    return hasher.hexdigest()
+
+def create_fingerprint(file_path, fingerprint_folder):
+    """Creates a fingerprint file in the settings folder."""
+    file_hash = calculate_file_hash(file_path)
+    if file_hash:
+        fingerprint_path = os.path.join(fingerprint_folder, f"{file_hash}.json")
+        metadata = {
+            "original_path": file_path,
+            "file_hash": file_hash,
+            "size": os.path.getsize(file_path),
+            "modified_time": os.path.getmtime(file_path)
+        }
+        os.makedirs(fingerprint_folder, exist_ok=True)
+        with open(fingerprint_path, 'w') as f:
+            json.dump(metadata, f)
+        return fingerprint_path
+    return None
+
+def is_duplicate(file_path, fingerprint_folder):
+    """Checks if the file already exists in the fingerprint folder."""
+    file_hash = calculate_file_hash(file_path)
+    if file_hash:
+        fingerprint_path = os.path.join(fingerprint_folder, f"{file_hash}.json")
+        return os.path.exists(fingerprint_path)
+    return False

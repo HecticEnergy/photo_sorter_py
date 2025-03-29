@@ -1,0 +1,50 @@
+import os
+import shutil
+from datetime import datetime
+from src.file_utils import create_fingerprint, is_duplicate
+from src.metadata import get_image_metadata
+
+def create_folder_structure(base_folder, date):
+    """Creates a folder structure based on the custom format."""
+    folder_path = os.path.join(base_folder, date.strftime("%Y/%m"))
+    os.makedirs(folder_path, exist_ok=True)
+    return folder_path
+
+def generate_filename(date, date_format):
+    """Generates a filename based on the custom format."""
+    return date.strftime(date_format)[:-3]  # Trim milliseconds for precision
+
+def copy_file_to_folder(file_path, folder_path, filename):
+    """Copies a file to the specified folder with a custom filename."""
+    new_file_path = os.path.join(folder_path, f"{filename}{os.path.splitext(file_path)[-1]}")
+    shutil.copy2(file_path, new_file_path)  # Preserve metadata
+    print(f"Copied {file_path} to {new_file_path}")
+
+def process_file(file_path, settings):
+    """Processes a single file: extracts metadata, creates folder, fingerprints, and copies."""
+    fingerprint_folder = settings.fingerprint_folder()
+    output_folder = settings.output_folder()
+
+    if is_duplicate(file_path, fingerprint_folder):
+        print(f"Duplicate detected: {file_path}. Skipping processing.")
+    else:
+        metadata = get_image_metadata(file_path)
+        if metadata:
+            try:
+                date = datetime.strptime(metadata, "%Y:%m:%d %H:%M:%S")
+                folder_path = create_folder_structure(output_folder, date)
+                filename = generate_filename(date, settings.date_format())
+                copy_file_to_folder(file_path, folder_path, filename)
+                create_fingerprint(file_path, fingerprint_folder)
+            except ValueError as e:
+                print(f"Invalid date format in metadata for {file_path}: {e}")
+        else:
+            print(f"No metadata found for {file_path}. Skipping file.")
+
+def organize_files(settings):
+    """Organizes files by reading metadata and arranging them into folders."""
+    input_folder = settings.input_folder()
+    for root, dirs, files in os.walk(input_folder):
+        for file in files:
+            file_path = os.path.join(root, file)
+            process_file(file_path, settings)
