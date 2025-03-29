@@ -6,14 +6,6 @@ from src.settings import ParserSettings, load_settings
 from src.logging import configure_logging, log_message  # Import log_message for logging
 
 
-def configure_settings(settings=None):
-    """Configures the logging settings."""
-    if settings is None:
-        settings = load_settings()
-    configure_logging(settings.log_mode, settings.log_path, settings.log_level)
-    return settings
-
-
 def detect_execution_mode():
     """Detect whether the script is running interactively (CLI) or as a scheduled task."""
     if sys.stdin.isatty():
@@ -62,36 +54,52 @@ def configure_from_args(args):
     return settings
 
 
+def configure_settings():
+    """Configures settings either from command-line arguments or a configuration file."""
+    log_message(
+        "info",
+        "No settings provided. Attempting to load settings from the configuration file...",
+    )
+
+    if detect_execution_mode() == "console":
+        args = parse_args()
+        if args.config is not None:
+            return load_settings(args.config)
+        else:
+            return configure_from_args(args)
+    else:
+        return load_settings()
+
+
+def ensure_fingerprint_folder_exists(fingerprint_folder):
+    """Ensures the fingerprint folder exists."""
+    if not os.path.exists(fingerprint_folder):
+        os.makedirs(fingerprint_folder)
+        log_message("info", f"Created fingerprint folder: {fingerprint_folder}")
+
+
 def main(settings=None):
     """Main function to manage the workflow."""
     try:
+        # Configure initial logging
         configure_logging(log_mode="console", log_level="info", log_path=None)
 
-        # If no settings are provided, attempt to load settings from the configuration file
+        # Load settings if not provided
         if settings is None:
-            log_message(
-                "info",
-                "No settings provided. Attempting to load settings from the configuration file...",
-            )
+            settings = configure_settings()
 
-            if detect_execution_mode() == "console":
-                args = parse_args()
-                if args.config is not None:
-                    settings = load_settings(args.config)
-                else:
-                    settings = configure_from_args(args)
-            else:
-                settings = load_settings()
-
+        # Validate settings
         settings.validate()
+
+        # Configure logging based on settings
         configure_logging(settings.log_mode, settings.log_path, settings.log_level)
 
         # Ensure the fingerprint folder exists
-        if not os.path.exists(settings.fingerprint_folder()):
-            os.makedirs(settings.fingerprint_folder())
+        ensure_fingerprint_folder_exists(settings.fingerprint_folder())
 
         # Start organizing files
         organize_files(settings)
+
     except Exception as e:
         log_message("error", f"Error: {e}")
 
