@@ -15,6 +15,8 @@ def get_default_args():
     """Returns default arguments for the script."""
     mode = detect_execution_mode()
     return {
+        "input_folder": os.path.join(".", "input"),
+        "output_folder": os.path.join(".", "output"),
         "fingerprint_folder": os.path.join(".", ".settings", "fingerprints"),
         "date_format": "%Y-%m-%d_%H-%M-%S",
         "log_path": None,
@@ -29,8 +31,8 @@ def parse_args():
     """Configures settings from command line arguments."""
     defaults = get_default_args()
     parser = argparse.ArgumentParser(description="File Organizer Settings")
-    parser.add_argument("--input_folder", required=True, help="Input folder path")
-    parser.add_argument("--output_folder", required=True, help="Output folder path")
+    parser.add_argument("--input_folder", default=defaults["input_folder"], help="Input folder path")
+    parser.add_argument("--output_folder", default=defaults["output_folder"], help="Output folder path")
     parser.add_argument(
         "--fingerprint_folder",
         default=defaults["fingerprint_folder"],
@@ -114,7 +116,7 @@ def main():
         settings.validate()
 
         # Configure logging based on settings
-        configure_logging(settings.log_mode, settings.log_path, settings.log_level)
+        configure_logging(settings.log_mode(), settings.log_path(), settings.log_level())
 
         # Ensure required folders exist
         ensure_folders_exist(settings)

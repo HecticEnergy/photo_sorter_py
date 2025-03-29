@@ -2,7 +2,7 @@ import os
 import shutil
 from datetime import datetime
 from src.file_utils import create_fingerprint, is_duplicate
-from src.metadata import get_image_metadata, get_video_metadata, check_supported_format
+from src.metadata import SUPPORTED_IMAGE_FORMATS, SUPPORTED_VIDEO_FORMATS, get_image_metadata, get_video_metadata, check_supported_format
 from src.logging_wrapper import log_message  # Import log_message for logging
 
 def create_folder_structure(base_folder, date):
@@ -13,7 +13,7 @@ def create_folder_structure(base_folder, date):
 
 def generate_filename(date, date_format):
     """Generates a filename based on the custom format."""
-    return date.strftime(date_format)[:-3]  # Trim milliseconds for precision
+    return date.strftime(date_format)  # Trim milliseconds for precision
 
 def copy_file_to_folder(file_path, folder_path, filename):
     """Copies a file to the specified folder with a custom filename."""
@@ -38,9 +38,9 @@ def process_file(file_path, settings):
 
     # Determine metadata and process accordingly
     metadata = None
-    if file_path.lower().endswith(tuple(settings.SUPPORTED_IMAGE_FORMATS)):
+    if file_path.lower().endswith(tuple(SUPPORTED_IMAGE_FORMATS)):
         metadata = get_image_metadata(file_path)
-    elif file_path.lower().endswith(tuple(settings.SUPPORTED_VIDEO_FORMATS)):
+    elif file_path.lower().endswith(tuple(SUPPORTED_VIDEO_FORMATS)):
         metadata = get_video_metadata(file_path)
 
     if metadata:

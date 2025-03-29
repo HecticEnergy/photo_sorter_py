@@ -59,19 +59,18 @@ A Python-based tool to automatically organize photos and videos into structured 
 ### Running from the Command Line
 Run the tool interactively from the command line:
 ```bash
-python src/main.py --mode console
+python src/main.py
 ```
 
 ### Scheduled Tasks
 To automate the tool via a scheduled task (e.g., a cron job on Linux):
-1. Use the `--mode scheduled` flag:
    ```bash
-   python src/main.py --mode scheduled
+   python src/main.py
    ```
-2. Set up a cron job or task scheduler to run the script periodically:
+1. Set up a cron job or task scheduler to run the script periodically:
    - Example for Linux:
      ```bash
-     0 0 * * * /usr/bin/python3 /path/to/src/main.py --mode scheduled
+     0 0 * * * /usr/bin/python3 /path/to/src/main.py
      ```
 
 ---

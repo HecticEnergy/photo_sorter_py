@@ -1,0 +1,9 @@
+{
+"input_folder": "./test-in",
+"output_folder": "./test-out",
+"fingerprint_folder": "./settings/fingerprints",
+"date_format": "%Y-%m-%d at %H-%M-%S",
+"log_path": "./settings/logs",
+"log_level": "info",
+"log_mode": "console"
+}

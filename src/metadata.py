@@ -41,10 +41,11 @@ def check_supported_format(file_path):
 def get_image_metadata(file_path):
     """Extracts the DateTimeOriginal metadata from an image."""
     try:
-        with exiftool.ExifTool() as et:
+        with exiftool.ExifToolHelper() as et:
             metadata = et.get_metadata(file_path)
+            log_message("info", f"Metadata for {file_path}: {metadata}")
             # Extract 'DateTimeOriginal' field from the metadata
-            date_time_original = metadata.get("EXIF:DateTimeOriginal")
+            date_time_original = metadata[0].get("EXIF:DateTimeOriginal")
             if date_time_original:
                 return date_time_original
     except Exception as e:
@@ -55,7 +56,7 @@ def get_image_metadata(file_path):
 def get_video_metadata(file_path):
     """Extracts the creation date metadata from a video."""
     try:
-        with exiftool.ExifTool() as et:
+        with exiftool.ExifToolHelper() as et:
             metadata = et.get_metadata(file_path)
             # Extract 'CreateDate' field from the metadata
             create_date = metadata.get("QuickTime:CreateDate") or metadata.get(
