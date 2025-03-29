@@ -120,6 +120,32 @@ class ParserSettings:
         if not os.path.isdir(os.path.dirname(self._log_path)):
             raise ValueError(f"Invalid log path directory: {self._log_path}")
 
+    # Merge function
+    @staticmethod
+    def merge(settings1, settings2):
+        """
+        Merges two ParserSettings objects, replacing values in settings1
+        with values from settings2, if they are populated.
+
+        Args:
+            settings1 (ParserSettings): The base settings object to be updated.
+            settings2 (ParserSettings): The override settings object.
+
+        Returns:
+            ParserSettings: A new settings object with merged values.
+        """
+        merged_settings = ParserSettings(
+            input_folder=settings2._input_folder or settings1._input_folder,
+            output_folder=settings2._output_folder or settings1._output_folder,
+            fingerprint_folder=settings2._fingerprint_folder
+            or settings1._fingerprint_folder,
+            date_format=settings2._date_format or settings1._date_format,
+            log_path=settings2._log_path or settings1._log_path,
+            log_mode=settings2._log_mode or settings1._log_mode,
+            log_level=settings2._log_level or settings1._log_level,
+        )
+        return merged_settings
+
 
 def load_settings(config_path="./settings/config.json"):
     """
