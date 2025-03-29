@@ -15,13 +15,13 @@ def get_default_args():
     """Returns default arguments for the script."""
     mode = detect_execution_mode()
     return {
-        "fingerprint_folder": "./.settings/",
+        "fingerprint_folder": os.path.join(".", ".settings", "fingerprints"),
         "date_format": "%Y-%m-%d_%H-%M-%S",
         "log_path": None,
         "log_mode": mode,
         "log_level": "info",
         "config": None,
-        "config_folder": "./settings/",
+        "config_folder": os.path.join(".", ".settings"),
     }
 
 
