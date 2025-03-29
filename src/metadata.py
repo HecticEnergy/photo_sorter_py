@@ -1,6 +1,6 @@
 import exiftool
 import os
-from logging import log_message  # Import log_message from logging.py
+from src.logging import log_message  # Import log_message from logging.py
 
 # Define supported file extensions
 SUPPORTED_IMAGE_FORMATS = {".jpg", ".jpeg", ".png", ".tiff", ".bmp", ".gif", ".heic", ".heif", ".raw"}
