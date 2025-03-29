@@ -1,4 +1,6 @@
 import re
+import json
+import os
 
 class ParserSettings:
     def __init__(self, input_folder, output_folder, fingerprint_folder, date_format):
@@ -64,3 +66,40 @@ class ParserSettings:
     def validate(self):
         self.validate_folders()
         self.validate_date_format()
+
+
+def load_settings(config_path="./settings/config.json"):
+    """
+    Loads settings from a configuration file and creates a ParserSettings object.
+
+    Args:
+        config_path (str): Path to the configuration JSON file.
+
+    Returns:
+        ParserSettings: Configured ParserSettings object.
+    """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Settings file not found at: {config_path}")
+
+    try:
+        with open(config_path, "r") as config_file:
+            config = json.load(config_file)
+        
+        # Validate required keys in the config file
+        required_keys = ["input_folder", "output_folder", "fingerprint_folder", "date_format"]
+        for key in required_keys:
+            if key not in config:
+                raise ValueError(f"Missing required configuration key: {key}")
+        
+        # Create and return the ParserSettings object
+        settings = ParserSettings(
+            input_folder=config["input_folder"],
+            output_folder=config["output_folder"],
+            fingerprint_folder=config["fingerprint_folder"],
+            date_format=config["date_format"]
+        )
+        settings.validate()  # Validate the settings
+        return settings
+
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Error parsing the settings file: {e}")
