@@ -3,7 +3,7 @@ import sys
 import argparse
 from src.organizer import organize_files
 from src.settings import ParserSettings, load_settings
-from src.logging import configure_logging, log_message
+from src.logging_wrapper import configure_logging, log_message
 
 
 def detect_execution_mode():

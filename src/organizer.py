@@ -3,7 +3,7 @@ import shutil
 from datetime import datetime
 from src.file_utils import create_fingerprint, is_duplicate
 from src.metadata import get_image_metadata, get_video_metadata, check_supported_format
-from src.logging import log_message  # Import log_message for logging
+from src.logging_wrapper import log_message  # Import log_message for logging
 
 def create_folder_structure(base_folder, date):
     """Creates a folder structure based on the custom format."""

@@ -42,7 +42,7 @@ def log_message(level, message):
         level (str): The level of the log (e.g., "info", "warning", "error").
         message (str): The message to log.
     """
-    log_function = get_log_level(level)
+    log_function = get_logger(level)
     if log_function:
         log_function(message)
     else:
@@ -61,6 +61,25 @@ def get_log_level(level):
         int: Corresponding logging level constant.
     """
 
+    log_levels = {
+        "info": logging.INFO,
+        "warning": logging.WARNING,
+        "error": logging.ERROR,
+        "debug": logging.DEBUG,
+        "critical": logging.CRITICAL,
+    }
+    return log_levels.get(level.lower(), logging.INFO)  # Default to INFO if not found
+
+def get_logger(level):
+    """
+    Returns a logger configured with the specified log level.
+
+    Args:
+        level (str): The level of the log (e.g., "info", "warning", "error").
+
+    Returns:
+        logging.Logger: Configured logger instance.
+    """
     log_levels = {
         "info": logging.info,
         "warning": logging.warning,

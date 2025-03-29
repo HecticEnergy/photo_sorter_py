@@ -1,5 +1,5 @@
 from .settings import ParserSettings
-from .logging import configure_logging, log_message
+from .logging_wrapper import configure_logging, log_message
 from .organizer import organize_files
 from .file_utils import create_fingerprint, is_duplicate
 from .metadata import get_image_metadata, get_video_metadata, check_supported_format

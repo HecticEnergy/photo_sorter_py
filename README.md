@@ -59,7 +59,7 @@ A Python-based tool to automatically organize photos and videos into structured 
 ### Running from the Command Line
 Run the tool interactively from the command line:
 ```bash
-python src/main.py --mode cli
+python src/main.py --mode console
 ```
 
 ### Scheduled Tasks
