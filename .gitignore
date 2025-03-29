@@ -172,3 +172,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# local test files / exif
+exif*
+/settings
+/test-in
+/test-out
