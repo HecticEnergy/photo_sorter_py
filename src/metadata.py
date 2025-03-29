@@ -1,5 +1,6 @@
 import exiftool
 import os
+from logging import log_message  # Import log_message from logging.py
 
 # Define supported file extensions
 SUPPORTED_IMAGE_FORMATS = {".jpg", ".jpeg", ".png", ".tiff", ".bmp", ".gif", ".heic", ".heif", ".raw"}
@@ -10,7 +11,7 @@ def check_supported_format(file_path):
     _, file_extension = os.path.splitext(file_path.lower())
     if file_extension in SUPPORTED_IMAGE_FORMATS or file_extension in SUPPORTED_VIDEO_FORMATS:
         return True
-    print(f"Unsupported file format: {file_path}")
+    log_message("warning", f"Unsupported file format: {file_path}")
     return False
 
 def get_image_metadata(file_path):
@@ -23,7 +24,7 @@ def get_image_metadata(file_path):
             if date_time_original:
                 return date_time_original
     except Exception as e:
-        print(f"Error reading image metadata from {file_path}: {e}")
+        log_message("error", f"Error reading image metadata from {file_path}: {e}")
     return None
 
 def get_video_metadata(file_path):
@@ -36,5 +37,5 @@ def get_video_metadata(file_path):
             if create_date:
                 return create_date
     except Exception as e:
-        print(f"Error reading video metadata from {file_path}: {e}")
+        log_message("error", f"Error reading video metadata from {file_path}: {e}")
     return None

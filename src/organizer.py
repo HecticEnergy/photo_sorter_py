@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime
 from src.file_utils import create_fingerprint, is_duplicate
 from src.metadata import get_image_metadata, get_video_metadata, check_supported_format
+from src.logging import log_message  # Import log_message for logging
 
 def create_folder_structure(base_folder, date):
     """Creates a folder structure based on the custom format."""
@@ -18,7 +19,7 @@ def copy_file_to_folder(file_path, folder_path, filename):
     """Copies a file to the specified folder with a custom filename."""
     new_file_path = os.path.join(folder_path, f"{filename}{os.path.splitext(file_path)[-1]}")
     shutil.copy2(file_path, new_file_path)  # Preserve metadata
-    print(f"Copied {file_path} to {new_file_path}")
+    log_message("info", f"Copied {file_path} to {new_file_path}")
 
 def process_file(file_path, settings):
     """Processes a single file: extracts metadata, creates folder, fingerprints, and copies."""
@@ -27,12 +28,12 @@ def process_file(file_path, settings):
 
     # Check if the file format is supported
     if not check_supported_format(file_path):
-        print(f"Unsupported format: {file_path}. Skipping.")
+        log_message("warning", f"Unsupported format: {file_path}. Skipping.")
         return
 
     # Check for duplicates
     if is_duplicate(file_path, fingerprint_folder):
-        print(f"Duplicate detected: {file_path}. Skipping processing.")
+        log_message("warning", f"Duplicate detected: {file_path}. Skipping processing.")
         return
 
     # Determine metadata and process accordingly
@@ -55,9 +56,9 @@ def process_file(file_path, settings):
             # Create a fingerprint for the processed file
             create_fingerprint(file_path, fingerprint_folder)
         except ValueError as e:
-            print(f"Invalid date format in metadata for {file_path}: {e}")
+            log_message("error", f"Invalid date format in metadata for {file_path}: {e}")
     else:
-        print(f"No metadata found for {file_path}. Skipping.")
+        log_message("warning", f"No metadata found for {file_path}. Skipping.")
 
 def organize_files(settings):
     """Organizes files by reading metadata and arranging them into folders."""
