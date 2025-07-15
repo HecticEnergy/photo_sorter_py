@@ -6,11 +6,10 @@ JSON files and command line arguments.
 """
 
 import json
-import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-from .constants import DEFAULT_CONFIG, LogMode
+from .constants import DEFAULT_CONFIG
 
 
 class ConfigLoader:

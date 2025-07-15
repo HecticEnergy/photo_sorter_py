@@ -5,7 +5,6 @@ This module handles scanning directories, determining file destinations,
 and performing file moves with conflict resolution.
 """
 
-import os
 import shutil
 import uuid
 from datetime import datetime
@@ -41,8 +40,8 @@ class FileMover:
         self.unknown_strategy = config.get('unknown_strategy', UnknownDateStrategy.ROUTE_TO_UNKNOWN.value)
         self.date_format = config.get('date_format', '%Y-%m-%d at %H-%M-%S (%f)')
         
-        # Track moved files to prevent duplicate processing
-        self.moved_files = set()
+        # Track copied files to prevent duplicate processing
+        self.copied_files = set()
     
     def scan_files(self, input_path: Path) -> Generator[Path, None, None]:
         """
@@ -149,10 +148,16 @@ class FileMover:
                 # Use the configured date format
                 base_name = creation_date.strftime(self.date_format)
                 
-                # Handle microseconds formatting
+                # Handle microseconds formatting - if all zeros, use a sequence number instead
                 if '%f' in self.date_format and creation_date.microsecond == 0:
-                    # If microseconds are 0, replace with a counter or use original filename
-                    base_name = base_name.replace('000000', '000')
+                    # Replace microseconds with a 3-digit counter based on file name or use random
+                    import hashlib
+                    file_hash = hashlib.md5(str(file_path).encode()).hexdigest()[:3]
+                    base_name = base_name.replace('000000', file_hash.upper())
+                elif '%f' in self.date_format:
+                    # Convert microseconds to milliseconds (3 digits) for shorter names
+                    milliseconds = f"{creation_date.microsecond // 1000:03d}"
+                    base_name = base_name.replace(f"{creation_date.microsecond:06d}", milliseconds)
                 
             except ValueError as e:
                 self.logger.warning(f"Error formatting date with format '{self.date_format}': {e}")
@@ -245,66 +250,9 @@ class FileMover:
             new_stem = f"{stem}_{timestamp}"
             return base_path / f"{new_stem}{suffix}"
     
-    def move_file(self, source_path: Path, destination_path: Path) -> bool:
-        """
-        Move a file from source to destination.
-        
-        Args:
-            source_path: Source file path
-            destination_path: Destination file path
-            
-        Returns:
-            True if file was moved successfully, False otherwise
-        """
-        try:
-            # Check if file has already been moved in this session
-            if str(source_path) in self.moved_files:
-                self.logger.debug(f"File already processed in this session: {source_path}")
-                return False
-            
-            # Ensure destination directory exists
-            destination_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            if self.dry_run:
-                # Simulate the move
-                self.logger.info(f"[DRY RUN] Would move: {source_path} -> {destination_path}")
-                self.moved_files.add(str(source_path))
-                return True
-            
-            # Perform the actual move with retry logic
-            for attempt in range(MAX_RETRY_ATTEMPTS):
-                try:
-                    # Check if source file still exists
-                    if not source_path.exists():
-                        self.logger.warning(f"Source file no longer exists: {source_path}")
-                        return False
-                    
-                    # Perform the move
-                    shutil.move(str(source_path), str(destination_path))
-                    
-                    # Verify the move was successful
-                    if destination_path.exists() and not source_path.exists():
-                        self.logger.debug(f"Successfully moved: {source_path} -> {destination_path}")
-                        self.moved_files.add(str(source_path))
-                        return True
-                    else:
-                        raise OSError("Move operation did not complete as expected")
-                
-                except (OSError, PermissionError) as e:
-                    if attempt < MAX_RETRY_ATTEMPTS - 1:
-                        self.logger.warning(f"Move attempt {attempt + 1} failed for {source_path}: {e}. Retrying...")
-                        continue
-                    else:
-                        self.logger.error(f"Failed to move {source_path} after {MAX_RETRY_ATTEMPTS} attempts: {e}")
-                        return False
-            
-        except Exception as e:
-            self.logger.error(f"Unexpected error moving {source_path}: {e}")
-            return False
-    
     def copy_file(self, source_path: Path, destination_path: Path) -> bool:
         """
-        Copy a file from source to destination (alternative to move).
+        Copy a file from source to destination.
         
         Args:
             source_path: Source file path
@@ -314,22 +262,42 @@ class FileMover:
             True if file was copied successfully, False otherwise
         """
         try:
+            # Check if file has already been processed in this session
+            if str(source_path) in self.copied_files:
+                self.logger.debug(f"File already processed in this session: {source_path}")
+                return False
+            
             # Ensure destination directory exists
             destination_path.parent.mkdir(parents=True, exist_ok=True)
             
             if self.dry_run:
                 # Simulate the copy
-                self.logger.info(f"[DRY RUN] Would copy: {source_path} -> {destination_path}")
+                self.logger.info("[DRY RUN] Would copy file:")
+                self.logger.info(f"  Source: {source_path}")
+                self.logger.info(f"  Dest:   {destination_path}")
+                self.logger.info(f"  Size:   {source_path.stat().st_size if source_path.exists() else 'unknown'} bytes")
+                self.copied_files.add(str(source_path))
                 return True
             
-            # Perform the copy with retry logic
+            # Perform the actual copy with retry logic
             for attempt in range(MAX_RETRY_ATTEMPTS):
                 try:
+                    # Check if source file still exists
+                    if not source_path.exists():
+                        self.logger.warning(f"Source file no longer exists: {source_path}")
+                        return False
+                    
+                    # Perform the copy
                     shutil.copy2(str(source_path), str(destination_path))
                     
                     # Verify the copy was successful
                     if destination_path.exists():
-                        self.logger.debug(f"Successfully copied: {source_path} -> {destination_path}")
+                        file_size = destination_path.stat().st_size
+                        self.logger.debug("Successfully copied file:")
+                        self.logger.debug(f"  From: {source_path}")
+                        self.logger.debug(f"  To:   {destination_path}")
+                        self.logger.debug(f"  Size: {file_size} bytes")
+                        self.copied_files.add(str(source_path))
                         return True
                     else:
                         raise OSError("Copy operation did not complete as expected")
@@ -354,7 +322,7 @@ class FileMover:
             Dictionary containing movement statistics
         """
         return {
-            'files_processed': len(self.moved_files),
+            'files_processed': len(self.copied_files),
             'dry_run_mode': self.dry_run,
             'input_folder': str(self.input_folder),
             'output_folder': str(self.output_folder),

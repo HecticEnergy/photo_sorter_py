@@ -7,11 +7,10 @@ and detecting duplicate files to prevent redundant processing.
 
 import hashlib
 import json
-import os
 from pathlib import Path
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional
 
-from .constants import HashAlgorithm, FILE_BUFFER_SIZE, HASH_BUFFER_SIZE
+from .constants import HashAlgorithm, HASH_BUFFER_SIZE
 
 
 class FingerprintManager:
@@ -187,6 +186,9 @@ class FingerprintManager:
             # Create backup if file exists
             if self.fingerprint_file.exists():
                 backup_file = self.fingerprint_file.with_suffix('.json.bak')
+                # Remove existing backup if it exists (Windows fix)
+                if backup_file.exists():
+                    backup_file.unlink()
                 self.fingerprint_file.rename(backup_file)
                 self.logger.debug(f"Created backup: {backup_file}")
             
@@ -203,6 +205,9 @@ class FingerprintManager:
             backup_file = self.fingerprint_file.with_suffix('.json.bak')
             if backup_file.exists():
                 try:
+                    # Remove failed file if it exists
+                    if self.fingerprint_file.exists():
+                        self.fingerprint_file.unlink()
                     backup_file.rename(self.fingerprint_file)
                     self.logger.info("Restored fingerprint database from backup")
                 except Exception as restore_error:

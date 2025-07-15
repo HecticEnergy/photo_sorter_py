@@ -7,8 +7,6 @@ and other constant values used throughout the application.
 
 import re
 from enum import Enum
-from typing import Dict, List, Any
-
 # Version information
 VERSION = "1.0.0"
 
@@ -108,13 +106,33 @@ DEFAULT_CONFIG = {
     "preserve_folder_structure": False,
 }
 
-# EXIF metadata field mappings
+# EXIF metadata field mappings (in priority order)
 EXIF_DATE_FIELDS = [
-    'EXIF:DateTimeOriginal',
-    'EXIF:CreateDate', 
-    'EXIF:DateTime',
+    # Primary creation date fields
+    'DateTimeOriginal',           # EXIF date when photo was taken
+    'EXIF:DateTimeOriginal',      # Prefixed version
+    'CreateDate',                 # General creation date
+    'EXIF:CreateDate',           # Prefixed version  
+    'DateTime',                   # Generic date/time
+    'EXIF:DateTime',             # Prefixed version
+    
+    # Video/QuickTime fields
     'QuickTime:CreateDate',
     'QuickTime:CreationDate',
+    'CreationDate',
+    
+    # Sub-second precision versions
+    'SubSecDateTimeOriginal',
+    'SubSecCreateDate',
+    
+    # Alternative date fields
+    'DateCreated',
+    'ModifyDate',
+    
+    # File system fallbacks (lowest priority)
+    'FileCreateDate',
+    'File:FileCreateDate',
+    'FileModifyDate',
     'File:FileModifyDate',
 ]
 

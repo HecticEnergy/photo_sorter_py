@@ -181,7 +181,7 @@ class Logger:
         
         summary_message = (
             f"Session completed in {session_duration.total_seconds():.2f} seconds. "
-            f"Moved: {summary.get('moved', 0)}, "
+            f"Copied: {summary.get('copied', 0)}, "
             f"Skipped: {summary.get('skipped', 0)}, "
             f"Duplicates: {summary.get('duplicates', 0)}, "
             f"Errors: {summary.get('errors', 0)}, "
@@ -245,7 +245,7 @@ class Logger:
             print(f"Dry Run: {'Yes' if self.dry_run else 'No'}")
             print(f"Duration: {(datetime.now() - self.session_start).total_seconds():.2f} seconds")
             print()
-            print(f"Files moved:     {summary.get('moved', 0):,}")
+            print(f"Files copied:    {summary.get('copied', 0):,}")
             print(f"Files skipped:   {summary.get('skipped', 0):,}")
             print(f"Duplicates:      {summary.get('duplicates', 0):,}")
             print(f"Errors:          {summary.get('errors', 0):,}")

@@ -6,9 +6,8 @@ to ensure they are valid before the organization process begins.
 """
 
 import os
-import re
 from pathlib import Path
-from typing import Dict, Any, List, NamedTuple, Optional
+from typing import Dict, Any, List, NamedTuple
 
 from .constants import (
     VALIDATION_PATTERNS, 
@@ -63,6 +62,9 @@ class ConfigValidator:
         
         # Validate numeric values
         self._validate_numeric_values(config)
+        
+        # Validate file extensions
+        self._validate_file_extensions(config)
         
         # Validate file permissions
         self._validate_permissions(config)
@@ -191,6 +193,62 @@ class ConfigValidator:
                 self.errors.append(f"Invalid max_file_size_mb: {max_size}. Must be a positive number")
             elif max_size > 10240:  # 10GB
                 self.warnings.append(f"Very large max_file_size_mb: {max_size}MB. This may cause memory issues")
+    
+    def _validate_file_extensions(self, config: Dict[str, Any]) -> None:
+        """Validate that input folder contains supported file types."""
+        if not config.get('input_folder'):
+            return
+        
+        input_path = Path(config['input_folder'])
+        if not input_path.exists() or not input_path.is_dir():
+            return  # Path validation will handle this
+        
+        # Check if there are any supported files in the input directory
+        supported_files = []
+        unsupported_files = []
+        
+        try:
+            # Scan for files (including nested if scan_nested is True)
+            scan_nested = config.get('scan_nested', True)
+            pattern = "**/*" if scan_nested else "*"
+            
+            for file_path in input_path.glob(pattern):
+                if file_path.is_file():
+                    extension = file_path.suffix.lower()
+                    all_supported = SUPPORTED_IMAGE_EXTENSIONS | SUPPORTED_VIDEO_EXTENSIONS
+                    
+                    if extension in all_supported:
+                        supported_files.append(file_path)
+                    else:
+                        unsupported_files.append(file_path)
+            
+            # Provide feedback about file types found
+            if not supported_files:
+                if unsupported_files:
+                    self.warnings.append(
+                        f"No supported image/video files found in input folder. "
+                        f"Found {len(unsupported_files)} unsupported files."
+                    )
+                else:
+                    self.warnings.append("No files found in input folder.")
+            else:
+                image_count = sum(1 for f in supported_files 
+                                if f.suffix.lower() in SUPPORTED_IMAGE_EXTENSIONS)
+                video_count = sum(1 for f in supported_files 
+                                if f.suffix.lower() in SUPPORTED_VIDEO_EXTENSIONS)
+                
+                self.warnings.append(
+                    f"Found {len(supported_files)} supported files "
+                    f"({image_count} images, {video_count} videos)"
+                )
+                
+                if unsupported_files and len(unsupported_files) > 10:
+                    self.warnings.append(
+                        f"Found {len(unsupported_files)} unsupported files that will be ignored"
+                    )
+        
+        except Exception as e:
+            self.warnings.append(f"Could not scan input folder for file types: {e}")
     
     def _validate_permissions(self, config: Dict[str, Any]) -> None:
         """Validate file system permissions for the operation."""

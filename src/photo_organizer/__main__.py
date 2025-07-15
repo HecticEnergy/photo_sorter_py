@@ -135,15 +135,20 @@ def run_organization(config: Dict[str, Any]) -> Dict[str, Any]:
             
         # Process files
         summary = {
-            "moved": 0,
+            "copied": 0,
             "skipped": 0,
             "duplicates": 0,
             "errors": 0,
             "unknown": 0
         }
         
+        # Track all operations for final summary
+        operations_log = []
+        
         for file_path in file_mover.scan_files(input_path):
             try:
+                logger.debug(f"Processing file: {file_path}")
+                
                 # Extract metadata
                 metadata = metadata_parser.extract_metadata(file_path)
                 
@@ -152,26 +157,97 @@ def run_organization(config: Dict[str, Any]) -> Dict[str, Any]:
                 if fingerprint_manager.is_duplicate(file_hash, file_path):
                     logger.info(f"Duplicate file skipped: {file_path}")
                     summary["duplicates"] += 1
+                    # Track operation for summary
+                    operations_log.append({
+                        "source": str(file_path),
+                        "destination": "N/A",
+                        "status": "duplicate"
+                    })
                     continue
                     
                 # Determine destination
                 destination = file_mover.determine_destination(file_path, metadata)
                 
-                # Move file (or simulate in dry-run mode)
-                if file_mover.move_file(file_path, destination):
+                # Log the operation details
+                if config.get('dry_run', False):
+                    logger.info("[DRY RUN] Would copy:")
+                    logger.info(f"  From: {file_path}")
+                    logger.info(f"  To:   {destination}")
+                else:
+                    logger.info("Copying:")
+                    logger.info(f"  From: {file_path}")
+                    logger.info(f"  To:   {destination}")
+                
+                # Copy file (or simulate in dry-run mode)
+                if file_mover.copy_file(file_path, destination):
                     fingerprint_manager.record_fingerprint(file_hash, destination)
-                    summary["moved"] += 1
-                    logger.info(f"Moved: {file_path} -> {destination}")
+                    summary["copied"] += 1
+                    # Track operation for summary
+                    operations_log.append({
+                        "source": str(file_path),
+                        "destination": str(destination),
+                        "status": "copied"
+                    })
+                    if not config.get('dry_run', False):
+                        logger.info(f"✓ Successfully copied to: {destination}")
                 else:
                     summary["skipped"] += 1
+                    # Track operation for summary
+                    operations_log.append({
+                        "source": str(file_path),
+                        "destination": str(destination),
+                        "status": "failed"
+                    })
+                    logger.warning(f"✗ Failed to copy: {file_path}")
                     
             except Exception as e:
                 logger.error(f"Error processing {file_path}: {e}")
                 summary["errors"] += 1
+                # Track operation for summary
+                operations_log.append({
+                    "source": str(file_path),
+                    "destination": "N/A",
+                    "status": "error",
+                    "error": str(e)
+                })
                 
         # Save fingerprints
         fingerprint_manager.save_fingerprints()
         
+        # Display detailed summary
+        logger.info("=" * 60)
+        logger.info("ORGANIZATION SUMMARY")
+        logger.info("=" * 60)
+        logger.info(f"Files copied: {summary['copied']}")
+        logger.info(f"Files skipped (duplicates): {summary['duplicates']}")
+        logger.info(f"Files skipped (other): {summary['skipped']}")
+        logger.info(f"Files with errors: {summary['errors']}")
+        logger.info(f"Files with unknown dates: {summary['unknown']}")
+        logger.info(f"Total files processed: {sum(summary.values())}")
+        
+        # Show detailed operations if requested or if there are few files
+        if len(operations_log) <= 10 or config.get('verbose', False):
+            logger.info("\nDETAILED OPERATIONS:")
+            logger.info("-" * 40)
+            for i, op in enumerate(operations_log, 1):
+                status_indicator = {
+                    'copied': '✓',
+                    'duplicate': '⚠',
+                    'failed': '✗',
+                    'error': '✗'
+                }.get(op['status'], '?')
+                
+                logger.info(f"{i:3d}. {status_indicator} {op['status'].upper()}")
+                logger.info(f"      From: {op['source']}")
+                if op['destination'] != 'N/A':
+                    logger.info(f"      To:   {op['destination']}")
+                if 'error' in op:
+                    logger.info(f"      Error: {op['error']}")
+                logger.info("")
+        elif len(operations_log) > 10:
+            logger.info(f"\n(Use --verbose to see all {len(operations_log)} operations)")
+        
+        logger.info("=" * 60)
         logger.info("Organization process completed")
         logger.info(f"Summary: {summary}")
         
