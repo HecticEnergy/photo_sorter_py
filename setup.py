@@ -6,21 +6,40 @@ def load_requirements(filename="requirements.txt"):
         return file.read().splitlines()
 
 setup(
-    name="PhotoVideoOrganizer",
+    name="photo-organizer",
     version="1.0.0",
-    description="A tool for organizing photos and videos based on metadata",
-    author="Your Name",
-    packages=find_packages(),  # Automatically include all sub-packages
-    install_requires=load_requirements(),  # Dynamically read dependencies
+    description="A Python tool for organizing photos and videos by metadata into date-based folder structures",
+    long_description=open("README.md", "r", encoding="utf-8").read(),
+    long_description_content_type="text/markdown",
+    author="HecticEnergy",
+    url="https://github.com/HecticEnergy/photo_sorter_py",
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    install_requires=load_requirements(),
     entry_points={
         "console_scripts": [
-            "organize=src.main:main",  # Entry point for the CLI tool
+            "photo-organizer=photo_organizer.__main__:main",
         ]
     },
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: End Users/Desktop",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Topic :: Multimedia :: Graphics",
+        "Topic :: System :: Archiving",
+        "Topic :: Utilities",
     ],
-    python_requires=">=3.7",  # Specify the required Python version
+    python_requires=">=3.9",
+    keywords="photo video organizer metadata exif date sorting",
+    project_urls={
+        "Bug Reports": "https://github.com/HecticEnergy/photo_sorter_py/issues",
+        "Source": "https://github.com/HecticEnergy/photo_sorter_py",
+    },
 )

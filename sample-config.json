@@ -1,9 +1,17 @@
 {
-"input_folder": "./test-in",
-"output_folder": "./test-out",
-"fingerprint_folder": "./settings/fingerprints",
-"date_format": "%Y-%m-%d at %H-%M-%S",
-"log_path": "./settings/logs",
-"log_level": "info",
-"log_mode": "console"
+  "input_folder": "./test-in",
+  "output_folder": "./test-out",
+  "fingerprint_folder": "./fingerprints",
+  "date_format": "%Y-%m-%d at %H-%M-%S (%f)",
+  "log_path": "./photo_organizer.log",
+  "log_mode": "console",
+  "dry_run": false,
+  "unknown_strategy": "route_to_unknown",
+  "scan_nested": true,
+  "hash_algorithm": "sha256",
+  "filename_conflict_resolution": "timestamp_suffix",
+  "verbose": 1,
+  "max_file_size_mb": 1024,
+  "backup_originals": false,
+  "preserve_folder_structure": false
 }

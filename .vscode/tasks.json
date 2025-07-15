@@ -1,0 +1,60 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Photo Organizer",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-m",
+				"photo_organizer",
+				"--help"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Tests",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-m",
+				"pytest",
+				"src/photo_organizer/tests/",
+				"-v"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": ["$python"]
+		},
+		{
+			"label": "Run Photo Organizer with Config",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-m",
+				"photo_organizer",
+				"--config",
+				"sample-config.json",
+				"--dry-run"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "pip",
+			"args": [
+				"install",
+				"-r",
+				"requirements.txt"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
